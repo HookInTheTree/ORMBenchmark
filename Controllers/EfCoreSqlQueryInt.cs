@@ -1,32 +1,32 @@
-﻿using Dapper;
+﻿using FactoryMethod.Data;
 using FactoryMethod.Interfaces;
 using FactoryMethod.Models;
-using Npgsql;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace FactoryMethod.Controllers
 {
-    public class DapperInt : ICrudableInt
+    public class EfCoreSqlQueryInt : ICrudableInt
     {
-        private string _connectionString;
-        public string Name { get; } = "DapperInt";
-        public DapperInt(string connectionString)
+        private string _connnectionString;
+        public string Name { get; } = "EfCoreSqlQueryInt";
+
+        public EfCoreSqlQueryInt(string conString)
         {
-            _connectionString = connectionString;
+            _connnectionString = conString;
         }
 
         public List<Person> Select()
         {
             try
             {
-                using (IDbConnection db = new NpgsqlConnection(_connectionString))
+                using (var context = ApplicationDbContextFactory.CreateDbContext(_connnectionString))
                 {
-                    return db.Query<Person>("Select * from person").ToList();
+                    return context.person.FromSqlRaw(@"Select * from person").ToList();
                 }
             }
             catch (Exception ex)
@@ -43,9 +43,9 @@ namespace FactoryMethod.Controllers
         {
             try
             {
-                using (IDbConnection db = new NpgsqlConnection(_connectionString))
+                using (var context = ApplicationDbContextFactory.CreateDbContext(_connnectionString))
                 {
-                    return db.Query<Person>("Select * from person where firstname = '" + firstName + "'").ToList();
+                    return context.person.FromSqlRaw(@"Select * from person where firstname = '" + firstName + "'").ToList();
                 }
             }
             catch (Exception ex)
@@ -62,10 +62,9 @@ namespace FactoryMethod.Controllers
         {
             try
             {
-                using (IDbConnection db = new NpgsqlConnection(_connectionString))
+                using (var context = ApplicationDbContextFactory.CreateDbContext(_connnectionString))
                 {
-                    db.Execute("update person set firstname = '" + firstName + "' where id = " + id.ToString());
-                    return;
+                    context.Database.ExecuteSqlRaw(@"update person set firstname ='" + firstName + "' where id = " + id.ToString());
                 }
             }
             catch (Exception ex)
@@ -73,19 +72,16 @@ namespace FactoryMethod.Controllers
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine(ex.Message);
                 Console.ForegroundColor = ConsoleColor.White;
-                
             }
-
         }
 
         public void DeleteWhere(int id)
         {
             try
             {
-                using (IDbConnection db = new NpgsqlConnection(_connectionString))
+                using (var context = ApplicationDbContextFactory.CreateDbContext(_connnectionString))
                 {
-                    db.Execute("Delete from person where id = " + id.ToString());
-                    return;
+                    context.Database.ExecuteSqlRaw(@"delete from person where id = " + id);
                 }
             }
             catch (Exception ex)
@@ -93,7 +89,6 @@ namespace FactoryMethod.Controllers
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine(ex.Message);
                 Console.ForegroundColor = ConsoleColor.White;
-                
             }
 
         }

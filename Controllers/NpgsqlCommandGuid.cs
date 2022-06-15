@@ -53,6 +53,37 @@ namespace FactoryMethod.Controllers
 
         }
 
+        public void Create(List<Person2> persons)
+        {
+            try
+            {
+                string cmd = $"insert into person2(id, firstname, lastname, fio, username, password) values";
+
+                foreach (var person in persons)
+                {
+                    cmd += $"('{person.Id.ToString()}', '{person.FirstName}', '{person.LastName}', '{person.FIO}', '{person.UserName}', '{person.Password}'), ";
+                }
+
+                cmd = cmd.Remove(cmd.LastIndexOf(','));
+                cmd += ";";
+
+                using (NpgsqlConnection conn = new NpgsqlConnection(_connectionString))
+                {
+                    conn.Open();
+                    using (NpgsqlCommand command = new NpgsqlCommand(cmd, conn))
+                    {
+                        command.ExecuteNonQuery();
+                    }
+                    conn.Close();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine(ex.Message);
+                Console.ForegroundColor = ConsoleColor.White;
+            }
+        }
 
         public DataTable SelectWhere(string firstname)
         {

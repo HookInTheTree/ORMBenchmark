@@ -11,18 +11,21 @@ namespace FactoryMethod.Controllers
 {
     public class EfCoreGuidTracking : ICrudableGuid
     {
-        private ApplicationDbContext _context;
+        private string _connectionString;
         public string Name { get; } = "EfCoreGuidTracking";
-        public EfCoreGuidTracking(ApplicationDbContext context)
+        public EfCoreGuidTracking(string conString)
         {
-            _context = context;
+            _connectionString = conString;
         }
 
         public List<Person2> Select()
         {
             try
             {
-                return _context.person2.ToList();
+                using (var _context = ApplicationDbContextFactory.CreateDbContext(_connectionString))
+                {
+                    return _context.person2.ToList();
+                }
             }
             catch (Exception ex)
             {
@@ -38,7 +41,10 @@ namespace FactoryMethod.Controllers
         {
             try
             {
-                return _context.person2.Where(x => x.FIO.Contains(firstName)).ToList();
+                using (var _context = ApplicationDbContextFactory.CreateDbContext(_connectionString))
+                {
+                    return _context.person2.Where(x => x.FIO.Contains(firstName)).ToList();
+                }
             }
             catch (Exception ex)
             {
@@ -53,16 +59,19 @@ namespace FactoryMethod.Controllers
         {
             try
             {
-                var person = _context.person2.FirstOrDefault(x => x.Id == id);
-
-                if (person == null)
+                using (var _context = ApplicationDbContextFactory.CreateDbContext(_connectionString))
                 {
-                    return;
-                }
+                    var person = _context.person2.FirstOrDefault(x => x.Id == id);
 
-                person.FirstName = firstname;
-                _context.person2.Update(person);
-                _context.SaveChanges();
+                    if (person == null)
+                    {
+                        return;
+                    }
+
+                    person.FirstName = firstname;
+                    _context.person2.Update(person);
+                    _context.SaveChanges();
+                }
             }
             catch (Exception ex)
             {
@@ -79,21 +88,23 @@ namespace FactoryMethod.Controllers
         {
             try
             {
-                var person = _context.person2.FirstOrDefault(x => x.Id == id);
-                if (person == null)
+                using (var _context = ApplicationDbContextFactory.CreateDbContext(_connectionString))
                 {
-                    return;
+                    var person = _context.person2.FirstOrDefault(x => x.Id == id);
+                    if (person == null)
+                    {
+                        return;
+                    }
+                    _context.person2.Remove(person);
+                    _context.SaveChanges();
                 }
-                _context.person2.Remove(person);
-                _context.SaveChanges();
-                
             }
             catch (Exception ex)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine(ex.Message);
                 Console.ForegroundColor = ConsoleColor.White;
-               
+
             }
         }
     }

@@ -83,7 +83,7 @@ namespace FactoryMethod.Controllers
             {
                 using (IDbConnection db = new NpgsqlConnection(_connectionString))
                 {
-                    db.Execute("Delete person2 where id = " + id.ToString());
+                    db.Execute($"Delete from person2 where id = '{id.ToString()}'");
                     return;
                 }
             }

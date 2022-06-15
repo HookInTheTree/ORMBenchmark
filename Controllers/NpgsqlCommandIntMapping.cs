@@ -1,96 +1,73 @@
-﻿using FactoryMethod.Models;
+﻿using FactoryMethod.Interfaces;
+using FactoryMethod.Models;
 using Npgsql;
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Text.Json;
-using FactoryMethod.Interfaces;
 
 namespace FactoryMethod.Controllers
 {
-    public class NpgsqlCommandInt : ICrudableNpgsqlInt
+    internal class NpgsqlCommandIntMapping : ICrudableInt
     {
         private string _connectionString;
-        public string Name { get; } = "NpgsqlCommandInt";
-        public NpgsqlCommandInt(string connectionString)
+        public string Name { get; } = "NpgsqlCommandIntMapping";
+        public NpgsqlCommandIntMapping(string connectionString)
         {
             _connectionString = connectionString;
         }
-
-        public void Create(List<Person> persons)
+        public List<Person> Select()
         {
             try
             {
-                string cmd = $"insert into person(firstname, lastname, fio, username, password) values";
-                
-                foreach (var person in persons)
-                {
-                    cmd += $"('{person.FirstName}', '{person.LastName}', '{person.FIO}', '{person.UserName}', '{person.Password}'),";
-                }
+                string cmd = "select id, firstname, lastname, fio, username, password from person";
+                NpgsqlDataReader reader;
+                List<Person> people = new List<Person>();
 
-                cmd = cmd.Remove(cmd.LastIndexOf(','));
-                cmd += ";";
-
-                using (NpgsqlConnection conn = new NpgsqlConnection(_connectionString))
+                using (NpgsqlConnection connection = new NpgsqlConnection(_connectionString))
                 {
-                    conn.Open();
-                    using (NpgsqlCommand command = new NpgsqlCommand(cmd, conn))
+                    connection.Open();
+                    using (NpgsqlCommand command = new NpgsqlCommand(cmd, connection))
                     {
-                        command.ExecuteNonQuery();
+                        reader = command.ExecuteReader();
+                        int index = 0;
+                        while (reader.Read())
+                        {
+                            index = 0;
+                            people.Add(new Person()
+                            {
+                                Id = reader.GetInt32(index++),
+                                FirstName = reader.GetString(index++),
+                                LastName = reader.GetString(index++),
+                                FIO = reader.GetString(index++),
+                                UserName = reader.GetString(index++),
+                                Password = reader.GetString(index++),
+                            });
+                        }
+                        reader.Close();
                     }
-                    conn.Close();
+                    connection.Close();
                 }
+
+                return people;
             }
             catch (Exception ex)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine(ex.Message);
                 Console.ForegroundColor = ConsoleColor.White;
-            }
-        }
-
-        public DataTable Select()
-        {
-            try
-            {
-                string cmd = "select id, firstname, lastname, fio, username, password from person";
-                NpgsqlDataReader reader;
-                DataTable table;
-
-                using (NpgsqlConnection connection = new NpgsqlConnection(_connectionString))
-                {
-                    connection.Open();
-                    using (NpgsqlCommand command = new NpgsqlCommand(cmd, connection))
-                    {
-                        reader = command.ExecuteReader();
-                        table = new DataTable();
-                        table.Load(reader);
-                        reader.Close();
-                    }
-                    connection.Close();
-                }
-
-                return table;
-            }
-            catch(Exception ex)
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine(ex.Message);
-                Console.ForegroundColor= ConsoleColor.White;
-                return new DataTable();
+                return new List<Person>();
             }
 
         }
-        public DataTable SelectWhere(string firstname)
+        public List<Person> SelectWhere(string firstname)
         {
             try
             {
                 string cmd = $"select id, firstname, lastname, fio, username, password from person where firstname = '{firstname}'";
                 NpgsqlDataReader reader;
-                DataTable table;
+                List<Person> people = new List<Person>();
 
                 using (NpgsqlConnection connection = new NpgsqlConnection(_connectionString))
                 {
@@ -98,23 +75,33 @@ namespace FactoryMethod.Controllers
                     using (NpgsqlCommand command = new NpgsqlCommand(cmd, connection))
                     {
                         reader = command.ExecuteReader();
-
-                        table = new DataTable();
-                        table.Load(reader);
+                        int index = 0;
+                        while (reader.Read())
+                        {
+                            index = 0;
+                            people.Add(new Person()
+                            {
+                                Id = reader.GetInt32(index++),
+                                FirstName = reader.GetString(index++),
+                                LastName = reader.GetString(index++),
+                                UserName = reader.GetString(index++),
+                                Password = reader.GetString(index++)
+                            });
+                        }
 
                         reader.Close();
                     }
                     connection.Close();
                 }
 
-                return table;
+                return people;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine(ex.Message);
                 Console.ForegroundColor = ConsoleColor.White;
-                return new DataTable();
+                return new List<Person>();
             }
 
         }

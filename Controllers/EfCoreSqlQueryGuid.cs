@@ -10,23 +10,23 @@ using System.Threading.Tasks;
 
 namespace FactoryMethod.Controllers
 {
-    public class EfCoreGuidNoTracking : ICrudableGuid
+    public class EfCoreSqlQueryGuid : ICrudableGuid
     {
-        private string _connectionString;
-        public string Name { get; } = "EfCoreGuidNoTracking";
+        private string _connnectionString;
+        public string Name { get; } = "EfCoreSqlQueryGuid";
 
-        public EfCoreGuidNoTracking(string connectionString)
+        public EfCoreSqlQueryGuid(string conString)
         {
-            _connectionString = connectionString;
+            _connnectionString = conString;
         }
 
         public List<Person2> Select()
         {
             try
             {
-                using(var _context = ApplicationDbContextFactory.CreateDbContext(_connectionString))
+                using (var context = ApplicationDbContextFactory.CreateDbContext(_connnectionString))
                 {
-                    return _context.person2.AsNoTracking().ToList();
+                    return context.person2.FromSqlRaw(@"Select * from person2").AsNoTracking().ToList();
                 }
             }
             catch (Exception ex)
@@ -37,15 +37,15 @@ namespace FactoryMethod.Controllers
                 return new List<Person2>();
             }
 
-        }
+        }   
 
         public List<Person2> SelectWhere(string firstName)
         {
             try
             {
-                using (var _context = ApplicationDbContextFactory.CreateDbContext(_connectionString))
+                using (var context = ApplicationDbContextFactory.CreateDbContext(_connnectionString))
                 {
-                    return _context.person2.AsNoTracking().Where(x => x.FIO.Contains(firstName)).ToList();
+                    return context.person2.FromSqlRaw(@"Select * from person2 where firstname = '" + firstName + "'").AsNoTracking().ToList();
                 }
             }
             catch (Exception ex)
@@ -55,26 +55,16 @@ namespace FactoryMethod.Controllers
                 Console.ForegroundColor = ConsoleColor.White;
                 return new List<Person2>();
             }
-
+            
         }
 
         public void UpdateWhere(Guid id, string firstName)
         {
             try
             {
-                using (var _context = ApplicationDbContextFactory.CreateDbContext(_connectionString))
+                using (var context = ApplicationDbContextFactory.CreateDbContext(_connnectionString))
                 {
-                    var person = _context.person2.AsNoTracking().FirstOrDefault(x => x.Id == id);
-
-                    if (person == null)
-                    {
-                        return;
-                    }
-
-                    person.FirstName = firstName;
-                    _context.person2.Update(person);
-                    _context.SaveChanges();
-                    return;
+                    context.Database.ExecuteSqlRaw(@"update person2 set firstname ='" + firstName + "' where id = '" + id.ToString() + "'");
                 }
             }
             catch (Exception ex)
@@ -82,25 +72,16 @@ namespace FactoryMethod.Controllers
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine(ex.Message);
                 Console.ForegroundColor = ConsoleColor.White;
-                return;
             }
-
-
         }
 
         public void DeleteWhere(Guid id)
         {
             try
             {
-                using (var _context = ApplicationDbContextFactory.CreateDbContext(_connectionString))
+                using (var context = ApplicationDbContextFactory.CreateDbContext(_connnectionString))
                 {
-                    var person = _context.person2.AsNoTracking().FirstOrDefault(x => x.Id == id);
-                    if (person == null)
-                    {
-                        return;
-                    }
-                    _context.person2.Remove(person);
-                    _context.SaveChanges();
+                    context.Database.ExecuteSqlRaw(@"delete from person2 where id = '" + id.ToString() + "'");
                 }
             }
             catch (Exception ex)
@@ -108,9 +89,8 @@ namespace FactoryMethod.Controllers
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine(ex.Message);
                 Console.ForegroundColor = ConsoleColor.White;
-
             }
-
+            
         }
     }
 }

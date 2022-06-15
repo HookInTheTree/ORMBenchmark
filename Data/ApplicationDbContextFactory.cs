@@ -8,9 +8,9 @@ using System.Threading.Tasks;
 
 namespace FactoryMethod.Data
 {
-    public class ApplicationDbContextFactory
+    public static class ApplicationDbContextFactory
     {
-        public ApplicationDbContext CreateDbContext(string connectionString)
+        public static ApplicationDbContext CreateDbContext(string connectionString)
         {
             var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
             return new ApplicationDbContext(optionsBuilder.Options, connectionString);

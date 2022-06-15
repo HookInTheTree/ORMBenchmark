@@ -12,18 +12,21 @@ namespace FactoryMethod.Controllers
 {
     public class EfCoreIntNoTracking : ICrudableInt
     {
-        private ApplicationDbContext _context;
+        private string _connectionString;
         public string Name { get; } = "EfCoreIntNoTracking";
-        public EfCoreIntNoTracking(ApplicationDbContext context)
+        public EfCoreIntNoTracking(string conString)
         {
-            _context = context;
+            _connectionString = conString;
         }
 
         public List<Person> Select()
         {
             try
             {
-                return _context.person.AsNoTracking().ToList();
+                using (var _context = ApplicationDbContextFactory.CreateDbContext(_connectionString))
+                {
+                    return _context.person.AsNoTracking().ToList();
+                }
             }
             catch (Exception ex)
             {
@@ -39,7 +42,10 @@ namespace FactoryMethod.Controllers
         {
             try
             {
-                return _context.person.AsNoTracking().Where(x => x.FIO.Contains(firstName)).ToList();
+                using (var _context = ApplicationDbContextFactory.CreateDbContext(_connectionString))
+                {
+                    return _context.person.AsNoTracking().Where(x => x.FIO.Contains(firstName)).ToList();
+                }
             }
             catch (Exception ex)
             {
@@ -55,22 +61,25 @@ namespace FactoryMethod.Controllers
         {
             try
             {
-                if (id == 0 || string.IsNullOrEmpty(firstname))
+                using (var _context = ApplicationDbContextFactory.CreateDbContext(_connectionString))
                 {
+                    if (id == 0 || string.IsNullOrEmpty(firstname))
+                    {
+                        return;
+                    }
+
+                    var person = _context.person.AsNoTracking().FirstOrDefault(x => x.Id == id);
+
+                    if (person == null)
+                    {
+                        return;
+                    }
+
+                    person.FirstName = firstname;
+                    _context.person.Update(person);
+                    _context.SaveChanges();
                     return;
                 }
-
-                var person = _context.person.AsNoTracking().FirstOrDefault(x => x.Id == id);
-
-                if (person == null)
-                {
-                    return;
-                }
-
-                person.FirstName = firstname;
-                _context.person.Update(person);
-                _context.SaveChanges();
-                return;
             }
             catch (Exception ex)
             {
@@ -87,14 +96,16 @@ namespace FactoryMethod.Controllers
         {
             try
             {
-                var person = _context.person.AsNoTracking().FirstOrDefault(x => x.Id == id);
-                if (person == null)
+                using(var _context = ApplicationDbContextFactory.CreateDbContext(_connectionString))
                 {
-                    return;
+                    var person = _context.person.AsNoTracking().FirstOrDefault(x => x.Id == id);
+                    if (person == null)
+                    {
+                        return;
+                    }
+                    _context.person.Remove(person);
+                    _context.SaveChanges();
                 }
-                _context.person.Remove(person);
-                _context.SaveChanges();
-
             }
             catch (Exception ex)
             {
