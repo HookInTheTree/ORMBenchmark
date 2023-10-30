@@ -1,2 +1,2 @@
-Using this app i want to understand whice type of working database is faster.
+Using this app i want to understand which type of working database is faster.
 (EF CORE, Dapper, NpgsqlDriver)
